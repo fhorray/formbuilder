@@ -22,8 +22,8 @@ import {
   TypeIcon,
   UsersIcon,
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { capitalize } from '@/lib/captalize';
 import { $builderOpts } from '@/stores/builder-opts';
 

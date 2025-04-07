@@ -1,32 +1,26 @@
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { $builderFields, BuilderField } from '@/stores/builder-fields';
+import { $builderFields } from '@/stores/builder-fields';
 import { useStore } from '@nanostores/react';
-import { BetweenVerticalStartIcon, SquareIcon } from 'lucide-react';
-import { useState } from 'react';
-import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import { FieldWrapper } from './renderer/wrapper';
 
 import { Button } from '@/components/ui/button';
-import { FormProvider, useForm } from 'react-hook-form';
-import { $builderOpts, $builderOptsActions } from '@/stores/builder-opts';
 import { cn } from '@/lib/utils';
-
-type GridOptions = 'unique' | 'two-columns';
+import { $builderOpts } from '@/stores/builder-opts';
+import {
+  rectSortingStrategy,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { Droppable } from '../dnd/droppable';
+import { useDndKitContext } from './context';
 
 export const BuilderCanvas = () => {
-  const [value, setValue] = useState<GridOptions>('unique');
-
   const fields = useStore($builderFields);
-
-  const form = useForm<{ form: BuilderField[] }>({
-    defaultValues: {
-      form: [...fields],
-    },
-  });
+  const { handleDragEnd } = useDndKitContext();
 
   // onSubmit
-  const onSubmit = (values: { form: BuilderField[] }) => {
-    console.log(values);
+  const onSubmit = () => {
+    console.log(fields);
   };
 
   return (
@@ -50,43 +44,27 @@ export const BuilderCanvas = () => {
       </div>
 
       {/* CANVAS */}
-      <FormProvider {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col items-end gap-4 py-2 bg-red"
-        >
-          <div className="w-full gap-4">
-            {value === 'two-columns' ? (
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-white border rounded-lg p-6">
-                  Left Column
-                </div>
-                <div className="bg-white border rounded-lg p-6">
-                  Right Column
-                </div>
-              </div>
-            ) : (
-              <div
-                className={cn(
-                  'bg-white border rounded-lg p-4',
-                  $builderOpts.get().selectedField?.id === 'canvas'
-                    ? 'border-blue-500'
-                    : '',
-                )}
-              >
-                {fields
-                  .slice()
-                  .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-                  .map((field) => (
-                    <FieldWrapper key={field.id} field={field} />
-                  ))}
-              </div>
+      <Droppable id="canva-droppable">
+        <SortableContext items={fields} strategy={verticalListSortingStrategy}>
+          <div
+            className={cn(
+              'bg-white border rounded-lg p-4',
+              $builderOpts.get().selectedField?.id === 'canvas'
+                ? 'border-blue-500'
+                : '',
             )}
+          >
+            {fields
+              .slice()
+              .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+              .map((field) => (
+                <FieldWrapper key={field.id} field={field} />
+              ))}
           </div>
+        </SortableContext>
+      </Droppable>
 
-          <Button type="submit">Save</Button>
-        </form>
-      </FormProvider>
+      <Button onClick={onSubmit}>Save</Button>
     </div>
   );
 };

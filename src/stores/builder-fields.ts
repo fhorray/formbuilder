@@ -43,11 +43,17 @@ export interface BuilderField {
 
 export const $builderFields = atom<BuilderField[]>([]);
 
+
+
+// ACTIONS
 export const addField = (field: BuilderField) => {
   $builderFields.set([...$builderFields.get(), field]);
 };
 
-// ACTIONS
+export const setFields = (fields: BuilderField[]) => {
+  $builderFields.set(fields)
+}
+
 export const duplicateField = (id: string) => {
   const fieldToDuplicate = $builderFields.get().find((field) => field.id === id);
   if (fieldToDuplicate) {
@@ -72,38 +78,31 @@ export const updateField = (id: string, updatedField: BuilderField) => {
 };
 
 // function to move the order up
-export const moveFieldUp = (id: string) => {
-  const fields = $builderFields.get();
-  const currentField = fields.find((field) => field.id === id);
-  if (!currentField) return;
+export const moveField = (fromIndex: number, toIndex: number) => {
+  const fields = [...$builderFields.get()];
+  if (
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= fields.length ||
+    toIndex >= fields.length
+  ) {
+    return;
+  }
 
-  const currentOrder = currentField.order ?? 0;
-  const targetOrder = currentOrder - 1;
+  const movedField = fields[fromIndex];
 
-  // Encontrar o campo que atualmente tem a ordem para onde vamos mover
-  const otherField = fields.find((field) => field.order === targetOrder);
-  if (!otherField) return;
+  // Remover o campo da posição atual
+  fields.splice(fromIndex, 1);
+  // Inserir na nova posição
+  fields.splice(toIndex, 0, movedField);
 
-  // Trocar as ordens entre os campos
-  updateField(currentField.id, { ...currentField, order: targetOrder });
-  updateField(otherField.id, { ...otherField, order: currentOrder });
-};
+  // Reatribuir ordens sequenciais
+  const updatedFields = fields.map((field, index) => ({
+    ...field,
+    order: index,
+  }));
 
-export const moveFieldDown = (id: string) => {
-  const fields = $builderFields.get();
-  const currentField = fields.find((field) => field.id === id);
-  if (!currentField) return;
-
-  const currentOrder = currentField.order ?? 0;
-  const targetOrder = currentOrder + 1;
-
-  // Encontrar o campo que atualmente tem a ordem para onde vamos mover
-  const otherField = fields.find((field) => field.order === targetOrder);
-  if (!otherField) return;
-
-  // Trocar as ordens entre os campos
-  updateField(currentField.id, { ...currentField, order: targetOrder });
-  updateField(otherField.id, { ...otherField, order: currentOrder });
+  $builderFields.set(updatedFields);
 };
 
 export const addChild = (id: string, children: BuilderField) => {
@@ -131,6 +130,7 @@ export const getFieldById = (id: string) => {
 
 
 export const $builderFieldsActions = {
+  setFields,
   addChild,
   addField,
   removeField,
@@ -138,6 +138,5 @@ export const $builderFieldsActions = {
   clearFields,
   getFieldById,
   duplicateField,
-  moveFieldUp,
-  moveFieldDown
+  moveField
 };
